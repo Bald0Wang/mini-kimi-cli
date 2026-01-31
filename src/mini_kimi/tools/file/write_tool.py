@@ -24,15 +24,29 @@ class WriteFileTool:
         }
     }
 
-    def __call__(self, path: str, content: str) -> str:
+    def __call__(self, path: str, content: str) -> dict:
         print(f"\033[90m[System] Writing to file: {path}\033[0m")
         try:
             if ".." in path:
-                return "Error: Path cannot contain '..'"
+                return {
+                    "stdout": "",
+                    "stderr": "Error: Path cannot contain '..'",
+                    "exit_code": 1,
+                    "changed_files": []
+                }
             
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
-            return f"Successfully wrote to {path}"
+            return {
+                "stdout": f"Successfully wrote to {path}",
+                "stderr": "",
+                "exit_code": 0,
+                "changed_files": [path]
+            }
         except Exception as e:
-            return f"Error writing file: {str(e)}"
-
+            return {
+                "stdout": "",
+                "stderr": f"Error writing file: {str(e)}",
+                "exit_code": 1,
+                "changed_files": []
+            }

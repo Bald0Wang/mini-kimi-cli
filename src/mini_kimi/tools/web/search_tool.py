@@ -30,11 +30,16 @@ class SearchWebTool:
         }
     }
 
-    def __call__(self, query: str) -> str:
+    def __call__(self, query: str) -> dict:
         print(f"\033[90m[System] Searching web for: {query}\033[0m")
         
         if not HAS_DDGS:
-            return "Error: 'duckduckgo-search' library not found. Please install it via `pip install ddgs`."
+            return {
+                "stdout": "",
+                "stderr": "Error: 'duckduckgo-search' library not found. Please install it via `pip install ddgs`.",
+                "exit_code": 1,
+                "changed_files": []
+            }
 
         try:
             results = []
@@ -44,11 +49,26 @@ class SearchWebTool:
                     results.append(f"Title: {r.get('title')}\nLink: {r.get('href')}\nSnippet: {r.get('body')}\n")
             
             if not results:
-                return "No results found."
+                return {
+                    "stdout": "No results found.",
+                    "stderr": "",
+                    "exit_code": 0,
+                    "changed_files": []
+                }
             
-            return "\n---\n".join(results)
+            return {
+                "stdout": "\n---\n".join(results),
+                "stderr": "",
+                "exit_code": 0,
+                "changed_files": []
+            }
         except Exception as e:
-            return f"Error searching web: {str(e)}"
+            return {
+                "stdout": "",
+                "stderr": f"Error searching web: {str(e)}",
+                "exit_code": 1,
+                "changed_files": []
+            }
 
 class FetchURLTool:
     name = "FetchURL"
@@ -72,7 +92,7 @@ class FetchURLTool:
         }
     }
 
-    def __call__(self, url: str) -> str:
+    def __call__(self, url: str) -> dict:
         print(f"\033[90m[System] Fetching URL: {url}\033[0m")
         try:
             req = urllib.request.Request(
@@ -87,7 +107,17 @@ class FetchURLTool:
                 text = re.sub(r'<[^>]+>', ' ', text)
                 text = re.sub(r'\s+', ' ', text).strip()
                 
-                return text[:2000] + ("... (truncated)" if len(text) > 2000 else "")
+                snippet = text[:2000] + ("... (truncated)" if len(text) > 2000 else "")
+                return {
+                    "stdout": snippet,
+                    "stderr": "",
+                    "exit_code": 0,
+                    "changed_files": []
+                }
         except Exception as e:
-            return f"Error fetching URL: {str(e)}"
-
+            return {
+                "stdout": "",
+                "stderr": f"Error fetching URL: {str(e)}",
+                "exit_code": 1,
+                "changed_files": []
+            }

@@ -37,6 +37,22 @@ Rules for Web Browsing:
             }
         ]
 
+    @staticmethod
+    def _format_tool_result(result: Any) -> str:
+        """
+        标准化工具结果为字符串，便于写入 tool 消息。
+        目标结构：stdout / stderr / exit_code / changed_files
+        """
+        if isinstance(result, dict):
+            payload = {
+                "stdout": result.get("stdout", ""),
+                "stderr": result.get("stderr", ""),
+                "exit_code": result.get("exit_code", 0),
+                "changed_files": result.get("changed_files", []),
+            }
+            return json.dumps(payload, ensure_ascii=False)
+        return str(result)
+
     def run(self, user_input: str):
         self.messages.append({"role": "user", "content": user_input})
 
@@ -77,11 +93,21 @@ Rules for Web Browsing:
                             else:
                                 result = f"Error: Tool logic for {func_name} not implemented."
                         except Exception as e:
-                            result = f"Error executing tool: {e}"
+                            result = {
+                                "stdout": "",
+                                "stderr": f"Error executing tool: {e}",
+                                "exit_code": 1,
+                                "changed_files": []
+                            }
                     else:
-                        result = f"Error: Tool {func_name} not found."
+                        result = {
+                            "stdout": "",
+                            "stderr": f"Error: Tool {func_name} not found.",
+                            "exit_code": 1,
+                            "changed_files": []
+                        }
 
-                    result_str = str(result)
+                    result_str = self._format_tool_result(result)
                     if len(result_str) > 1000:
                         result_str = result_str[:1000] + "... (truncated)"
                     
@@ -99,4 +125,3 @@ Rules for Web Browsing:
                 return
 
         print("[System] Max steps reached.")
-

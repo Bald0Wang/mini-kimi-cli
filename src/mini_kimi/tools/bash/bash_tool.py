@@ -22,7 +22,7 @@ class BashTool:
         }
     }
 
-    def __call__(self, command: str) -> str:
+    def __call__(self, command: str) -> dict:
         print(f"\033[90m[System] Executing: {command}\033[0m")
         try:
             result = subprocess.run(
@@ -34,12 +34,25 @@ class BashTool:
                 encoding='utf-8',
                 errors='replace'
             )
-            output = result.stdout + result.stderr
-            if not output:
-                return "(No output)"
-            return output
+            stdout = result.stdout or ""
+            stderr = result.stderr or ""
+            return {
+                "stdout": stdout if stdout else "(No output)",
+                "stderr": stderr,
+                "exit_code": result.returncode,
+                "changed_files": []
+            }
         except subprocess.TimeoutExpired:
-            return "Error: Command timed out."
+            return {
+                "stdout": "",
+                "stderr": "Error: Command timed out.",
+                "exit_code": 124,
+                "changed_files": []
+            }
         except Exception as e:
-            return f"Error: {str(e)}"
-
+            return {
+                "stdout": "",
+                "stderr": f"Error: {str(e)}",
+                "exit_code": 1,
+                "changed_files": []
+            }
